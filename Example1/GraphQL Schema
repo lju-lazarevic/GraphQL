@@ -1,0 +1,59 @@
+//Run in Browser
+CALL graphql.idl('
+
+type Queries {
+	availableYears: Int @cypher(statement: "WITH this RETURN 2015")
+}
+
+type Country {
+	name: String
+	exports2016: [Commodity] @relation(name: "EXPORTS_2016", direction: "OUT")
+	exports2015: [Commodity] @relation(name: "EXPORTS_2015", direction: "OUT")
+	exports2014: [Commodity] @relation(name: "EXPORTS_2014", direction: "OUT")
+	exports2013: [Commodity] @relation(name: "EXPORTS_2013", direction: "OUT")
+	exports2012: [Commodity] @relation(name: "EXPORTS_2012", direction: "OUT")
+	exports2011: [Commodity] @relation(name: "EXPORTS_2011", direction: "OUT")
+	imports2016: [Commodity] @relation(name: "IMPORTS_2016", direction: "OUT")
+	imports2015: [Commodity] @relation(name: "IMPORTS_2015", direction: "OUT")
+	imports2014: [Commodity] @relation(name: "IMPORTS_2014", direction: "OUT")
+	imports2013: [Commodity] @relation(name: "IMPORTS_2013", direction: "OUT")
+	imports2012: [Commodity] @relation(name: "IMPORTS_2012", direction: "OUT")
+	imports2011: [Commodity] @relation(name: "IMPORTS_2011", direction: "OUT")
+	totalUSDImports2016: Int @cypher(statement: "MATCH (this)-[:IMPORTS_2016]->(c:Commodity) RETURN sum(c.tradeUSD)/1000")
+	totalUSDImports2015: Int @cypher(statement: "MATCH (this)-[:IMPORTS_2015]->(c:Commodity) RETURN sum(c.tradeUSD)/1000")
+	totalUSDImports2014: Int @cypher(statement: "MATCH (this)-[:IMPORTS_2014]->(c:Commodity) RETURN sum(c.tradeUSD)/1000")
+	totalUSDImports2013: Int @cypher(statement: "MATCH (this)-[:IMPORTS_2013]->(c:Commodity) RETURN sum(c.tradeUSD)/1000")
+	totalUSDImports2012: Int @cypher(statement: "MATCH (this)-[:IMPORTS_2012]->(c:Commodity) RETURN sum(c.tradeUSD)/1000")
+	totalUSDImports2011: Int @cypher(statement: "MATCH (this)-[:IMPORTS_2011]->(c:Commodity) RETURN sum(c.tradeUSD)/1000")
+	totalUSDExports2016: Int @cypher(statement: "MATCH (this)-[:EXPORTS_2016]->(c:Commodity) RETURN sum(c.tradeUSD)/1000")
+	totalUSDExports2015: Int @cypher(statement: "MATCH (this)-[:EXPORTS_2015]->(c:Commodity) RETURN sum(c.tradeUSD)/1000")
+	totalUSDExports2014: Int @cypher(statement: "MATCH (this)-[:EXPORTS_2014]->(c:Commodity) RETURN sum(c.tradeUSD)/1000")
+	totalUSDExports2013: Int @cypher(statement: "MATCH (this)-[:EXPORTS_2013]->(c:Commodity) RETURN sum(c.tradeUSD)/1000")
+	totalUSDExports2012: Int @cypher(statement: "MATCH (this)-[:EXPORTS_2012]->(c:Commodity) RETURN sum(c.tradeUSD)/1000")
+	totalUSDExports2011: Int @cypher(statement: "MATCH (this)-[:EXPORTS_2011]->(c:Commodity) RETURN sum(c.tradeUSD)/1000")
+	
+}
+
+type Commodity {
+	type: [String] @cypher(statement: "MATCH (this)-[:HAS_COMMODITY_TYPE]->(t:CommodityType) RETURN t.name")
+	commodityCategory: String @cypher(statement: "MATCH (this)-[:HAS_COMMODITY_TYPE]->(:CommodityType)-[:IS_IN_CATEGORY]->(c:Category) RETURN c.name")
+	quantityType: String @cypher(statement: "MATCH (this)-[:HAS_QUANTITY_TYPE]->(q:QuantityName) RETURN q.name")
+	tradeUSD: Int
+	weight: Int
+	quantity: Int
+}
+
+type Category {
+	name: String 
+	commodityTypes: [CommodityType] @relation(name: "IS_IN_CATEGORY", direction: "IN")
+}
+
+type CommodityType {
+	code: String
+	name: String
+	category: [Category] @relation(name: "IS_IN_CATEGORY", direction:"OUT")
+	exportedBy: [String] @cypher(statement: "MATCH (this)<-[:HAS_COMMODITY_TYPE]-(:Commodity)<-[:EXPORTS_2016|EXPORTS_2015|EXPORTS_2014|EXPORTS_2013|EXPORTS_2012|EXPORTS_2011]-(c:Country) RETURN DISTINCT c.name as name ORDER BY name")
+	importedBy: [String] @cypher(statement: "MATCH (this)<-[:HAS_COMMODITY_TYPE]-(:Commodity)<-[:IMPORTS_2016|IMPORTS_2015|IMPORTS_2014|IMPORTS_2013|IMPORTS_2012|IMPORTS_2011]-(c:Country) RETURN DISTINCT c.name as name ORDER BY name")
+	}
+
+')
