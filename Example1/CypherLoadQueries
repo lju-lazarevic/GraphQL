@@ -26,6 +26,33 @@ USING PERIODIC COMMIT 1000
 LOAD CSV WITH HEADERS FROM 'file:///commodity_trade_statistics_data.csv' AS line
 MERGE (country:Country {name:line.country_or_area});
 
+CREATE INDEX ON :Country(name);
+CREATE INDEX ON :CommodityType(code);
+CREATE INDEX ON :Category(name);
+CREATE INDEX ON :QuantityName(name);
+
+USING PERIODIC COMMIT 1000
+LOAD CSV WITH HEADERS FROM 'file:///commodity_trade_statistics_data.csv' AS line
+MERGE (commodityType:CommodityType {code:line.comm_code})
+	ON CREATE SET commodityType.name = line.commodity;
+
+USING PERIODIC COMMIT 1000
+LOAD CSV WITH HEADERS FROM 'file:///commodity_trade_statistics_data.csv' AS line
+MATCH (commodityType:CommodityType {code:line.comm_code})
+MERGE (category:Category {name:line.category})
+MERGE (commodityType)-[:IS_IN_CATEGORY]->(category);
+
+USING PERIODIC COMMIT 1000
+LOAD CSV WITH HEADERS FROM 'file:///commodity_trade_statistics_data.csv' AS line
+MERGE (quant:QuantityName {name:line.quantity_name});
+
+USING PERIODIC COMMIT 1000
+LOAD CSV WITH HEADERS FROM 'file:///commodity_trade_statistics_data.csv' AS line
+MERGE (quant:QuantityName {name:line.quantity_name});
+
+USING PERIODIC COMMIT 1000
+LOAD CSV WITH HEADERS FROM 'file:///commodity_trade_statistics_data.csv' AS line
+MERGE (country:Country {name:line.country_or_area});
 USING PERIODIC COMMIT 1000
 LOAD CSV WITH HEADERS FROM 'file:///commodity_trade_statistics_data.csv' AS line
 MATCH (country:Country {name:line.country_or_area})
@@ -35,8 +62,5 @@ CREATE (commodity:Commodity {tradeUSD:tointeger(line.trade_usd), weight:tointege
 CREATE (commodity)-[:HAS_COMMODITY_TYPE]->(commodityType)
 CREATE (commodity)-[:HAS_QUANTITY_TYPE]->(quant)
 WITH line, commodity, country
-CALL apoc.do.when(
-	line.flow = 'Export', 'CREATE (country)-[:EXPORTS {year:tointeger(line.year)}]->(commodity)', 
-    'CREATE (country)-[:IMPORTS {year:tointeger(line.year)}]->(commodity)', 
-    {line:line, country:country, commodity:commodity}) YIELD value
-RETURN count(*)
+CALL apoc.create.relationship(country, upper(line.flow)+"S_"+line.year, {}, commodity) YIELD rel
+RETURN count(*);
