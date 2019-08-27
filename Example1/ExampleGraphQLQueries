@@ -1,0 +1,15 @@
+//What countries do we have?
+{Country {name}}
+
+
+//What did Albania import in 2016?
+{Country (name:"Albania") {imports2016 {type}} }
+
+//What is the total exports in USD for 2012 for Albania ($K)?
+{Country (name:"Albania") {totalUSDExports2012}}
+
+//What commodity types are there per category?
+{Category {name commodityTypes {name}}}
+
+//Which countries export roses?
+{CommodityType (name:"Roses") {exportedBy}}
